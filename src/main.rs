@@ -1,8 +1,29 @@
+use libc::{close, dup2, execvp, fork};
+use std::env;
 use std::io;
-use std::io::stdout;
-use std::io::Write;
+use std::io::{stdout, Write};
 
 fn main() {
+    // redirect stderr to stdout
+    unsafe {
+        dup2(libc::STDOUT_FILENO, libc::STDERR_FILENO);
+    }
+
+    // parse command line
+    let args: Vec<String> = env::args().collect();
+    println!("{:?}", args);
+    match &args[1][..] {
+        "-h" => println!("help"),
+        "-v" => println!("verbose"),
+        "-p" => println!("prompt"),
+        _ => println!("unknown argument"),
+    }
+
+    // proceed to infinite execution loop
+    main_loop();
+}
+
+fn main_loop() {
     loop {
         // print prompt
         print!("$ ");

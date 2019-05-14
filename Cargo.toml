@@ -5,3 +5,4 @@ authors = ["Sasha Romanov <22565619+aluminiumi@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
+libc = "0.2.54"
