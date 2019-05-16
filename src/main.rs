@@ -18,7 +18,6 @@ enum BuiltinState {
 enum ParseStatus {
     ParselineFg,
     ParselineBg,
-    ParselineEmpty,
     ParselineError,
 }
 
@@ -164,7 +163,8 @@ fn parse_line(cmdline: &String) -> (ParseStatus, CmdlineTokens) {
                                         None => token.infile = Some(slice),
                                         Some(_x) => {
                                             eprintln!("uh oh: multiple infiles specified");
-                                            status = ParseStatus::ParselineError;
+                                            //status = ParseStatus::ParselineError;
+                                            state = ParseState::StateError;
                                             break;
                                         }
                                     }
@@ -175,7 +175,7 @@ fn parse_line(cmdline: &String) -> (ParseStatus, CmdlineTokens) {
                                         None => token.outfile = Some(slice),
                                         Some(_x) => {
                                             eprintln!("uh oh: multiple outfiles specified");
-                                            status = ParseStatus::ParselineError;
+                                            state = ParseState::StateError;
                                             break;
                                         }
                                     }
@@ -239,7 +239,8 @@ fn parse_line(cmdline: &String) -> (ParseStatus, CmdlineTokens) {
                     }
                     None => {
                         // unmatching quote; fail
-                        status = ParseStatus::ParselineError;
+                        //status = ParseStatus::ParselineError;
+                        state = ParseState::StateError;
                         break;
                     }
                 }
@@ -249,7 +250,7 @@ fn parse_line(cmdline: &String) -> (ParseStatus, CmdlineTokens) {
                 // non-special character
             }
 
-        }
+        } // end of if not whitespace
 
         last_char_was_ws = false;
 
@@ -257,8 +258,12 @@ fn parse_line(cmdline: &String) -> (ParseStatus, CmdlineTokens) {
         //stdout().flush()
         //    .expect("Failed to flush prompt");
 
-    } // end of if current char not whitespace
+    } // end of loop
 
+    match state {
+        ParseState::StateError => status = ParseStatus::ParselineError,
+        _ => { }
+    }
     //println!("");
 
     // examine the first token to see if it's a builtin command
@@ -276,6 +281,13 @@ fn parse_line(cmdline: &String) -> (ParseStatus, CmdlineTokens) {
             token.builtin_state = BuiltinState::Fg;
         }
         _ => println!("something else"),
+    }
+
+    // examine last token to see if &
+    match token.argv[token.argc-1] {
+        "&" => status = ParseStatus::ParselineBg,
+        //TODO: get ampersand at end of line not separated by space
+        _ => status = ParseStatus::ParselineFg,
     }
 
     /*
